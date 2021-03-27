@@ -90,6 +90,8 @@ button.el-button--small {
   padding: 3px 5px;
   margin: 5px;
   border: 1px dashed #00a19d;
+  height: calc(100vh - 60px);
+  box-sizing: border-box;
 
   .cardTagBox {
     border: 1px dashed #00a19d;
@@ -100,7 +102,22 @@ button.el-button--small {
   }
 
   .tableContent {
+    position: relative;
     padding: 8px;
     border: 1px dashed #00a19d;
   }
+}
+
+.el-table {
+  border-color: #333;
+
+  * {
+    border-color: #333 !important;
+  }
+}
+
+.el-table--border::after,
+.el-table--group::after,
+.el-table::before {
+  background-color: #333;
 }

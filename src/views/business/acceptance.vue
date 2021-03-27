@@ -8,58 +8,66 @@
         :dataList="item.dataList"
       />
     </div>
-    <div class="buttonGroup">
-      <el-button size="small" @click="add">新增</el-button>
-      <el-button size="small" @click="edit">修改</el-button>
-      <el-button size="small" @click="del">删除</el-button>
-      <el-button size="small" @click="leadin">数据导入</el-button>
-      <el-button size="small" @click="contrast">比对储备库</el-button>
-      <el-input
-        class="searchInput"
-        size="small"
-        v-model="searchVal"
-        placeholder="请输入搜索内容"
-      ></el-input>
-      <el-button size="small" @click="search">查询</el-button>
-    </div>
-    <div class="tableContent">
-      <el-table
-        :data="tableData"
-        height="250"
-        border
-        :cell-style="cellCenter"
-        :header-cell-style="cellCenter"
-        style="width: 100%"
-      >
-        <el-table-column type="selection" width="55"> </el-table-column>
-        <el-table-column type="index" label="序号" width="50">
-        </el-table-column>
-        <el-table-column prop="objcode" label="业扩受理编号"> </el-table-column>
-        <el-table-column prop="objname" label="业务负责人"> </el-table-column>
-        <el-table-column prop="jingbr" label="经办人"> </el-table-column>
-        <el-table-column prop="phone" label="联系方式"> </el-table-column>
-        <el-table-column prop="leix" label="业务类型"> </el-table-column>
-        <el-table-column prop="period" label="所处阶段">
-          <template #default="scope">
-            <div class="checkTxt" @click="checkPeriod(scope)">点击查看</div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="mingx" label="业务受理明细"> </el-table-column>
-        <el-table-column prop="file" label="客户受理资料"> </el-table-column>
-      </el-table>
-    </div>
+    <es-table ref="esTable" :height="'calc(100% - 135px)'" :colData="colData">
+      <template v-slot:buttonGroup>
+        <el-button size="small" @click="add">新增</el-button>
+        <el-button size="small" @click="edit">修改</el-button>
+        <el-button size="small" @click="del">删除</el-button>
+        <el-button size="small" @click="leadin">数据导入</el-button>
+        <el-button size="small" @click="contrast">比对储备库</el-button>
+      </template>
+    </es-table>
+    <el-dialog
+      title="新增"
+      :visible.sync="showFormLayer"
+      width="30%"
+      :close-on-click-modal="false"
+      center
+    >
+      <el-form :model="formData" :rules="rules" label-width="100px">
+        <el-form-item label="业务负责人" prop="objname">
+          <el-input v-model="formData.objname" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="经办人" prop="jingbr">
+          <el-input v-model="formData.jingbr" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="联系方式" prop="phone">
+          <el-input
+            v-model.number="formData.phone"
+            autocomplete="off"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="业务类型" prop="leix">
+          <el-select v-model="formData.leix" placeholder="请选择业务类型">
+            <el-option label="10kV大客户" value="0"></el-option>
+            <el-option label="100kV大客户" value="1"></el-option>
+            <el-option label="500kV大客户" value="2"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showFormLayer = false">取 消</el-button>
+          <el-button type="primary" @click="formSubmit">确 定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import cardTag from "@/components/cardTag";
+import esTable from "@/components/eaTable";
+import colData from "@/utils/tableColData.js";
 export default {
   components: {
     cardTag,
+    esTable,
   },
   data() {
     return {
       searchVal: "",
+      showFormLayer: false,
       cardTagList: [
         {
           title: "业务受理",
@@ -92,35 +100,62 @@ export default {
           ],
         },
       ],
-      tableData: [
-        {
-          objcode: "20210115001",
-          objname: "王小虎",
-          jingbr: "吴大帅",
-          phone: "138********",
-          leix: "10kV大客户",
-          period: "",
-          mingx: "",
-          file: "",
-        },
-      ],
+      colData: colData.acceptanceCol,
+      formData: {
+        objname: "",
+        jingbr: "",
+        phone: "",
+        leix: "",
+      },
+      rules: {
+        objname: [
+          { required: true, message: "请输入业务负责人", trigger: "blur" },
+        ],
+        jingbr: [{ required: true, message: "请输入经办人", trigger: "blur" }],
+        phone: [
+          {
+            required: true,
+            type: "number",
+            message: "请输入联系方式",
+            trigger: "blur",
+          },
+        ],
+        leix: [
+          { required: true, message: "请选择业务类型", trigger: "change" },
+        ],
+      },
+      formLabelWidth: "100px",
     };
   },
   methods: {
-    cellCenter() {
-      return "text-align:center";
-    },
-    checkPeriod(data) {
+    checkDetail(data) {
       console.log(data);
     },
-    add() {},
+    add() {
+      console.log(123);
+      this.showFormLayer = true;
+    },
     edit() {},
-    del() {},
+    del() {
+      console.log(this.$refs.esTable.multipleSelection);
+    },
     leadin() {},
     contrast() {},
-    search() {},
+    formSubmit() {
+      this.$refs.esTable.getTableData();
+      this.showFormLayer = false;
+      this.$message({
+        message: "新增成功",
+        type: "success",
+      });
+    },
   },
 };
 </script>
 <style lang="scss">
+.tablePage {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+}
 </style>

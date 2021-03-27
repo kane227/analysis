@@ -1,53 +1,90 @@
 <template>
-  <div class="eaTable">
+  <div class="eaTable" :style="{ height: height }">
     <div class="buttonGroup">
-      <el-button size="small" @click="add">新增</el-button>
-      <el-button size="small" @click="edit">修改</el-button>
-      <el-button size="small" @click="del">删除</el-button>
-      <el-button size="small" @click="leadin">数据导入</el-button>
-      <el-button size="small" @click="contrast">比对储备库</el-button>
+      <slot name="buttonGroup"></slot>
       <el-input
         class="searchInput"
         size="small"
         v-model="searchVal"
         placeholder="请输入搜索内容"
+        v-if="searchable"
       ></el-input>
-      <el-button size="small" @click="search">查询</el-button>
+      <el-button size="small" v-if="searchable" @click="search">查询</el-button>
     </div>
     <div class="tableContent">
       <el-table
+        ref="multipleTable"
         :data="tableData"
-        height="250"
+        :max-height="'calc(100% - 50px)'"
         border
-        :cell-style="cellCenter"
-        :header-cell-style="cellCenter"
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55"> </el-table-column>
-        <el-table-column type="index" label="序号" width="50">
-        </el-table-column>
-        <el-table-column prop="objcode" label="业扩受理编号"> </el-table-column>
-        <el-table-column prop="objname" label="业务负责人"> </el-table-column>
-        <el-table-column prop="jingbr" label="经办人"> </el-table-column>
-        <el-table-column prop="phone" label="联系方式"> </el-table-column>
-        <el-table-column prop="leix" label="业务类型"> </el-table-column>
-        <el-table-column prop="period" label="所处阶段">
-          <template #default="scope">
-            <div class="checkTxt" @click="checkPeriod(scope)">点击查看</div>
+        <el-table-column
+          v-for="(item, index) in colData"
+          :key="index"
+          :type="item.type"
+          :width="item.width"
+          :prop="item.prop"
+          :label="item.label"
+          align="center"
+        >
+          <template #default="scope" v-if="item.template">
+            <div class="checkTxt" @click="templateClick(scope)">
+              {{ item.template }}
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="mingx" label="业务受理明细"> </el-table-column>
-        <el-table-column prop="file" label="客户受理资料"> </el-table-column>
       </el-table>
+      <div class="tablePage">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="currentPage"
+          :page-sizes="[20, 40, 60, 80, 100]"
+          :page-size="pageSize"
+          layout=" prev, pager, next, total, sizes, jumper"
+          :total="tableData.length"
+          background
+        >
+        </el-pagination>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
+  props: {
+    height: {
+      type: String,
+      default: "100%",
+    },
+    searchable: {
+      type: Boolean,
+      default: true,
+    },
+    getTableDataUrl: {
+      type: String,
+      default: "",
+    },
+    colData: {
+      type: Array,
+      default: () => [],
+    },
+    currentPage: {
+      type: Number,
+      default: 1,
+    },
+  },
+  mounted() {
+    this.getTableData();
+  },
   data() {
     return {
       searchVal: "",
+      multipleSelection: [],
+      pageSize: 20,
       tableData: [
         {
           objcode: "20210115001",
@@ -59,22 +96,44 @@ export default {
           mingx: "",
           file: "",
         },
+        {
+          objcode: "20210115002",
+          objname: "王大虎",
+          jingbr: "吴小帅",
+          phone: "138********",
+          leix: "10kV大客户",
+          period: "",
+          mingx: "",
+          file: "",
+        },
       ],
     };
   },
   methods: {
-    cellCenter() {
-      return "text-align:center";
+    getTableData() {
+      console.log("加载数据");
     },
-    checkPeriod(data) {
-      console.log(data);
+    templateClick(data) {
+      this.$parent.checkDetail(data);
     },
-    add() {},
-    edit() {},
-    del() {},
-    leadin() {},
-    contrast() {},
-    search() {},
+    // 记录选中的行
+    handleSelectionChange(val) {
+      this.multipleSelection = val;
+    },
+    // 监听每页条数变化
+    handleSizeChange(val) {
+      this.pageSize = val;
+      this.getTableData();
+    },
+    // 监听当前页数变化
+    handleCurrentChange(val) {
+      this.currentPage = val;
+      this.getTableData();
+    },
+    // 搜索
+    search() {
+      this.getTableData();
+    },
   },
 };
 </script>
@@ -84,8 +143,15 @@ export default {
   padding: 5px 0;
 }
 .tableContent {
+  height: 100%;
   padding: 8px;
+  box-sizing: border-box;
   border: 1px dashed #00a19d;
+}
+.tablePage {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
 }
 .checkTxt {
   cursor: pointer;
